@@ -18,6 +18,10 @@ const isLoading = ref(false)
 const result = ref<AnalysisResult | null>(null)
 const loadingText = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
+const uploadError = ref('')
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic']
 
 const loadingTexts = [
   '正在比對詐騙話術資料庫...',
@@ -60,6 +64,19 @@ function handleUpload(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
   if (!file) return
 
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    uploadError.value = '格式不支援，請上傳 JPG、PNG、GIF、WebP 或 HEIC 圖片。'
+    if (fileInput.value) fileInput.value.value = ''
+    return
+  }
+
+  if (file.size > MAX_IMAGE_SIZE) {
+    uploadError.value = `圖片過大（${(file.size / 1024 / 1024).toFixed(1)} MB），請上傳 5 MB 以下的圖片。`
+    if (fileInput.value) fileInput.value.value = ''
+    return
+  }
+
+  uploadError.value = ''
   imageType.value = file.type || 'image/png'
   const reader = new FileReader()
   reader.onload = (e) => {
@@ -74,6 +91,7 @@ function handleUpload(event: Event) {
 
 async function analyze() {
   if (!inputText.value.trim() && !imageData.value) return
+  if (isLoading.value) return
 
   isLoading.value = true
   result.value = null
@@ -135,6 +153,7 @@ function resetAll() {
   inputText.value = ''
   imageData.value = null
   result.value = null
+  uploadError.value = ''
   if (fileInput.value) fileInput.value.value = ''
 }
 </script>
@@ -179,6 +198,11 @@ function resetAll() {
       >
         開始鑑定
       </button>
+
+      <div v-if="uploadError" class="error-banner">
+        <span>⚠️</span>
+        <span>{{ uploadError }}</span>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -391,6 +415,20 @@ textarea:focus {
   border-color: rgba(255,75,75,0.4);
   color: var(--text);
   background: rgba(255,75,75,0.05);
+}
+
+.error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #FCA5A5;
+  line-height: 1.5;
 }
 
 /* Analyze button */

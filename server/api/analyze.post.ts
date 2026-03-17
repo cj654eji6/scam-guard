@@ -48,13 +48,22 @@ const SYSTEM_PROMPT = `你是一位專業的詐騙訊息分析師，擅長辨識
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
+  const apiKey = config.anthropicApiKey || process.env.ANTHROPIC_API_KEY || ''
   const body = await readBody(event)
 
   if (!body.text && !body.image) {
     throw createError({ statusCode: 400, message: '請提供文字或圖片' })
   }
 
-  const client = new Anthropic({ apiKey: config.anthropicApiKey })
+  if (body.image && body.image.length * 0.75 > 5 * 1024 * 1024) {
+    throw createError({ statusCode: 413, message: '圖片超過 5 MB 限制，請壓縮後再上傳' })
+  }
+
+  if (body.text && body.text.length > 5000) {
+    throw createError({ statusCode: 400, message: '文字過長，請縮短至 5000 字以內' })
+  }
+
+  const client = new Anthropic({ apiKey })
 
   const content: Anthropic.MessageCreateParams['messages'][0]['content'] = []
 
