@@ -64,7 +64,7 @@ function handleUpload(event: Event) {
   const reader = new FileReader()
   reader.onload = (e) => {
     const dataUrl = e.target?.result as string
-    imageData.value = dataUrl.split(',')[1]
+    imageData.value = dataUrl.split(',')[1] ?? null
     if (!inputText.value) {
       inputText.value = `[截圖已上傳] ${file.name}`
     }
@@ -81,7 +81,7 @@ async function analyze() {
   // Loading 動畫文字
   let i = 0
   const interval = setInterval(() => {
-    loadingText.value = loadingTexts[i % loadingTexts.length]
+    loadingText.value = loadingTexts[i % loadingTexts.length] ?? ''
     i++
   }, 700)
 
