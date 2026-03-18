@@ -129,7 +129,7 @@ function shareResult() {
     .replace(/https?:\/\/[^\s,，。？！\)）"']+/gi, '[連結已隱藏]')
     .replace(/(?<![a-zA-Z0-9])www\.[^\s,，。？！\)）"']+/gi, '[連結已隱藏]')
   const originalPart = sanitizedText ? `\n\n📋 原始訊息（連結已隱藏）：\n${sanitizedText}` : ''
-  const text = `🛡️ 詐騙鑑定結果\n\n風險分數：${r.riskScore}/100\n類型：${r.scamType || '無明顯詐騙類型'}\n${r.summary}\n\n建議：${r.advice}${originalPart}\n\n🚨 詳情請見 165 反詐騙網站：https://165.npa.gov.tw`
+  const text = `🛡️ 詐騙鑑定結果\n\n風險分數：${r.riskScore}/100\n類型：${r.scamType || '無明顯詐騙類型'}\n${r.summary}\n\n建議：${r.advice}${originalPart}\n\n🚨 詳情請見 165 反詐騙網站：https://165.npa.gov.tw\n\n👉 立即試試「防詐獵人」，一鍵識破詐騙無所遁形！→ https://line.me/R/ti/p/@793pgncd`
 
   if (liff.isApiAvailable('shareTargetPicker')) {
     liff.shareTargetPicker([{ type: 'text', text }])
