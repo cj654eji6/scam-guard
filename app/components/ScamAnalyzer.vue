@@ -126,21 +126,48 @@ function stripProtocol(text: string): string {
   return text.replace(/https?:\/\//gi, '')
 }
 
-function shareResult() {
+async function shareResult() {
   if (!result.value) return
   const r = result.value
   const strippedText = stripProtocol(inputText.value.trim())
   const originalPart = strippedText ? `\n\n📋 被鑑定的可疑訊息：\n${strippedText}` : ''
   const text = `🛡️ 詐騙鑑定結果\n\n風險分數：${r.riskScore}/100\n類型：${r.scamType || '無明顯詐騙類型'}\n${r.summary}\n\n建議：${r.advice}${originalPart}\n\n🚨 詳情請見 165 反詐騙網站：https://165.npa.gov.tw\n\n👉 立即試試「防詐獵人」，一鍵識破詐騙無所遁形！\nhttps://line.me/R/ti/p/@793pgncd`
 
-  if (liff.isApiAvailable('shareTargetPicker')) {
-    liff.shareTargetPicker([{ type: 'text', text }])
-  } else if (navigator.share) {
-    navigator.share({ title: '詐騙鑑定結果', text })
-  } else {
-    navigator.clipboard.writeText(text).then(() => {
-      alert('鑑定結果已複製！請貼給親友查看。')
-    })
+  // 如果有上傳截圖，準備圖片檔案
+  const files: File[] = []
+  if (imageData.value) {
+    try {
+      const byteString = atob(imageData.value)
+      const ab = new ArrayBuffer(byteString.length)
+      const ia = new Uint8Array(ab)
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i)
+      const ext = imageType.value.split('/')[1] || 'png'
+      files.push(new File([ab], `scam-evidence.${ext}`, { type: imageType.value }))
+    } catch { /* 圖片轉換失敗，僅分享文字 */ }
+  }
+
+  // 優先使用 Web Share API
+  if (navigator.share) {
+    try {
+      const shareData: ShareData = { title: '詐騙鑑定結果', text }
+      if (files.length && navigator.canShare?.({ files })) {
+        shareData.files = files
+      }
+      await navigator.share(shareData)
+      return
+    } catch (e: unknown) {
+      // 使用者主動取消分享，不做任何事
+      if (e instanceof DOMException && e.name === 'AbortError') return
+      // 其他錯誤 → fallback 到剪貼簿
+    }
+  }
+
+  // Fallback：複製到剪貼簿
+  try {
+    await navigator.clipboard.writeText(text)
+    alert('鑑定結果已複製！請貼給親友查看。')
+  } catch {
+    alert('無法分享，請手動複製結果。')
   }
 }
 
@@ -158,7 +185,7 @@ function resetAll() {
   <div>
     <!-- Header -->
     <div class="header">
-      <div class="logo">🛡️</div>
+      <img src="/favicon.png" alt="防詐獵人" class="logo-img" />
       <div class="header-text">
         <h1>詐騙鑑定器</h1>
         <p>SCAM DETECTOR v1.0</p>
@@ -169,10 +196,13 @@ function resetAll() {
     <div v-if="!isLoading && !result">
       <div class="input-card">
         <div class="input-label">貼上可疑訊息</div>
-        <textarea
-          v-model="inputText"
-          placeholder="請貼上您收到的可疑訊息，例如：「恭喜您中獎了！點擊連結立即領取 NT$50,000 獎金…」"
-        />
+        <div class="textarea-wrap">
+          <textarea
+            v-model="inputText"
+            placeholder="請貼上您收到的可疑訊息，例如：「恭喜您中獎了！點擊連結立即領取 NT$50,000 獎金…」"
+          />
+          <button v-if="inputText" class="clear-btn" @click="inputText = ''">✕</button>
+        </div>
         <div class="divider">或</div>
         <button class="upload-btn" @click="fileInput?.click()">
           <span>📷</span> 上傳截圖
@@ -271,7 +301,7 @@ function resetAll() {
       </div>
 
       <button class="share-btn" @click="shareResult">
-        <span>💬</span> 一鍵分享給 LINE 親友
+        <span>💬</span> 分享鑑定結果
       </button>
 
       <button class="reset-btn" @click="resetAll">重新鑑定</button>
@@ -292,17 +322,13 @@ function resetAll() {
   padding-top: 8px;
 }
 
-.logo {
+.logo-img {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #FF4B4B, #FF8C42);
   border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
+  object-fit: cover;
   flex-shrink: 0;
-  box-shadow: 0 0 20px rgba(255,75,75,0.4);
+  filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.4));
 }
 
 .header-text h1 {
@@ -351,6 +377,10 @@ function resetAll() {
   box-shadow: 0 0 6px var(--accent);
 }
 
+.textarea-wrap {
+  position: relative;
+}
+
 textarea {
   width: 100%;
   background: var(--surface2);
@@ -361,10 +391,34 @@ textarea {
   font-size: 15px;
   line-height: 1.6;
   padding: 14px 16px;
+  padding-right: 40px;
   resize: none;
   min-height: 130px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.clear-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.clear-btn:hover {
+  background: rgba(255,75,75,0.3);
+  color: #fff;
 }
 
 textarea::placeholder { color: var(--muted); }

@@ -1,0 +1,26 @@
+name: 推播詐騙新聞
+
+on:
+  schedule:
+    # 每週一、四 早上 10:00 (台灣時間 = UTC 02:00)
+    - cron: '0 2 * * 1,4'
+  workflow_dispatch:  # 手動觸發
+
+jobs:
+  push-news:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Run push script
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+        run: python scripts/push_scam_news.py
