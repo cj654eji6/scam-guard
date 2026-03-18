@@ -125,7 +125,10 @@ async function analyze() {
 function shareResult() {
   if (!result.value) return
   const r = result.value
-  const originalPart = inputText.value.trim() ? `\n\n📋 原始訊息：\n${inputText.value.trim()}` : ''
+  const sanitizedText = inputText.value.trim()
+    .replace(/https?:\/\/[^\s,，。？！\)）"']+/gi, '[連結已隱藏]')
+    .replace(/(?<![a-zA-Z0-9])www\.[^\s,，。？！\)）"']+/gi, '[連結已隱藏]')
+  const originalPart = sanitizedText ? `\n\n📋 原始訊息（連結已隱藏）：\n${sanitizedText}` : ''
   const text = `🛡️ 詐騙鑑定結果\n\n風險分數：${r.riskScore}/100\n類型：${r.scamType || '無明顯詐騙類型'}\n${r.summary}\n\n建議：${r.advice}${originalPart}\n\n🚨 詳情請見 165 反詐騙網站：https://165.npa.gov.tw`
 
   if (liff.isApiAvailable('shareTargetPicker')) {
@@ -192,6 +195,10 @@ function resetAll() {
       <div v-if="uploadError" class="error-banner">
         <span>⚠️</span>
         <span>{{ uploadError }}</span>
+      </div>
+
+      <div class="disclaimer">
+        本工具鑑定結果僅供參考，詐騙手法變化極快，如有疑慮請以 165 官方資訊為準，或直接撥打 165 反詐騙專線確認。
       </div>
     </div>
 
@@ -266,6 +273,10 @@ function resetAll() {
       </button>
 
       <button class="reset-btn" @click="resetAll">重新鑑定</button>
+
+      <div class="disclaimer">
+        本工具鑑定結果僅供參考，詐騙手法變化極快，如有疑慮請以 165 官方資訊為準，或直接撥打 165 反詐騙專線確認。
+      </div>
     </div>
   </div>
 </template>
@@ -804,6 +815,19 @@ textarea:focus {
 }
 
 .reset-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.55); }
+
+/* Disclaimer */
+.disclaimer {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted);
+  text-align: center;
+}
 
 /* Animation */
 .fade-in {
