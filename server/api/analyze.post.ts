@@ -1,6 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { readFileSync } from 'fs'
-import { resolve } from 'path'
+import fraudSitesData from './data/fraud_sites.json'
 
 interface FraudSite {
   siteName: string
@@ -9,9 +8,7 @@ interface FraudSite {
   week: number
 }
 
-const fraudSites: FraudSite[] = JSON.parse(
-  readFileSync(resolve('./server/api/data/fraud_sites.json'), 'utf-8')
-)
+const fraudSites: FraudSite[] = fraudSitesData as FraudSite[]
 
 function extractUrls(text: string): string[] {
   return text.match(/https?:\/\/[^\s,，。？！\)）"']+/gi) ?? []
