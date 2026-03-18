@@ -156,7 +156,7 @@ function resetAll() {
   <div>
     <!-- Header -->
     <div class="header">
-      <div class="logo">🛡️</div>
+      <img src="/favicon.png" alt="防詐獵人" class="logo-img" />
       <div class="header-text">
         <h1>詐騙鑑定器</h1>
         <p>SCAM DETECTOR v1.0</p>
@@ -290,17 +290,13 @@ function resetAll() {
   padding-top: 8px;
 }
 
-.logo {
+.logo-img {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #FF4B4B, #FF8C42);
   border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
+  object-fit: cover;
   flex-shrink: 0;
-  box-shadow: 0 0 20px rgba(255,75,75,0.4);
+  filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.4));
 }
 
 .header-text h1 {
