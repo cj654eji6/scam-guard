@@ -155,7 +155,6 @@ function resetAll() {
         <h1>詐騙鑑定器</h1>
         <p>SCAM DETECTOR v1.0</p>
       </div>
-      <div class="header-badge">AI POWERED</div>
     </div>
 
     <!-- Input Section -->
@@ -203,41 +202,42 @@ function resetAll() {
     <!-- Result -->
     <div v-if="result && !isLoading" class="result fade-in">
       <div class="score-card" :class="riskLevel">
-        <div class="score-label">SCAM RISK SCORE</div>
-        <div class="score-number">{{ result.riskScore }}</div>
-        <div class="score-verdict">{{ verdictText }}</div>
-        <div class="risk-bar-wrap">
+        <div class="score-left">
+          <div class="score-label">風險分數</div>
+          <div class="score-number">{{ result.riskScore }}</div>
+        </div>
+        <div class="score-right">
+          <div class="score-verdict">{{ verdictText }}</div>
           <div class="risk-bar-track">
             <div class="risk-bar-needle" :style="{ left: result.riskScore + '%' }" />
           </div>
           <div class="risk-bar-segments">
-            <div class="risk-seg safe" :class="{ active: riskLevel === 'safe' }">✓ 安全<br>0 – 30</div>
-            <div class="risk-seg warn" :class="{ active: riskLevel === 'warn' }">⚡ 可疑<br>31 – 70</div>
-            <div class="risk-seg danger" :class="{ active: riskLevel === 'danger' }">⚠ 高風險<br>71 – 100</div>
+            <div class="risk-seg safe" :class="{ active: riskLevel === 'safe' }">✓ 安全<br>0–30</div>
+            <div class="risk-seg warn" :class="{ active: riskLevel === 'warn' }">⚡ 可疑<br>31–70</div>
+            <div class="risk-seg danger" :class="{ active: riskLevel === 'danger' }">⚠ 高風險<br>71–100</div>
           </div>
         </div>
       </div>
 
-      <div class="detail-grid">
-        <div class="detail-card">
-          <div class="detail-card-label">詐騙類型</div>
-          <div class="detail-card-value">
-            <span class="type-badge">{{ result.scamType || '無明顯詐騙類型' }}</span>
-          </div>
-        </div>
-        <div class="detail-card">
-          <div class="detail-card-label">建議行動</div>
-          <div class="suggestion-text">{{ result.advice }}</div>
-        </div>
-        <div class="detail-card full">
-          <div class="detail-card-label">分析說明</div>
-          <div class="suggestion-text">{{ result.analysis }}</div>
-        </div>
-<div v-if="result.indicators.length" class="detail-card full">
-          <div class="detail-card-label">可疑關鍵詞</div>
-          <div class="keywords">
-            <span v-for="kw in result.indicators" :key="kw" class="keyword-tag">{{ kw }}</span>
-          </div>
+      <div v-if="result.scamType" class="type-row">
+        <span class="type-label">詐騙類型</span>
+        <span class="type-badge">{{ result.scamType }}</span>
+      </div>
+
+      <div class="advice-card">
+        <div class="advice-card-label">⚠ 建議行動</div>
+        <div class="advice-text">{{ result.advice }}</div>
+      </div>
+
+      <div class="analysis-card">
+        <div class="analysis-card-label">分析說明</div>
+        <div class="analysis-text">{{ result.analysis }}</div>
+      </div>
+
+      <div v-if="result.indicators.length" class="keywords-card">
+        <div class="keywords-label">可疑關鍵詞</div>
+        <div class="keywords">
+          <span v-for="kw in result.indicators" :key="kw" class="keyword-tag">{{ kw }}</span>
         </div>
       </div>
 
@@ -295,17 +295,6 @@ function resetAll() {
   margin-top: 2px;
 }
 
-.header-badge {
-  margin-left: auto;
-  background: rgba(59,130,246,0.12);
-  border: 1px solid rgba(59,130,246,0.3);
-  color: #60A5FA;
-  font-size: 10px;
-  font-family: var(--mono);
-  padding: 4px 10px;
-  border-radius: 20px;
-  letter-spacing: 0.5px;
-}
 
 /* Input */
 .input-card {
@@ -488,50 +477,51 @@ textarea:focus {
   50% { opacity: 0.3; }
 }
 
-/* Score card */
+/* Score card - 橫排緊湊版 */
 .score-card {
   background: var(--surface);
-  border-radius: 16px;
-  padding: 24px;
+  border: 1.5px solid var(--border2);
+  border-radius: 18px;
+  padding: 18px 20px;
   margin-bottom: 12px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 18px;
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--border2);
 }
 
 .score-card::before {
   content: '';
   position: absolute;
-  top: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 200px;
-  height: 200px;
+  top: -40px; left: -20px;
+  width: 160px; height: 160px;
   border-radius: 50%;
   filter: blur(60px);
-  opacity: 0.2;
+  opacity: 0.15;
 }
 
 .score-card.safe::before { background: var(--safe); }
 .score-card.warn::before { background: var(--warn); }
 .score-card.danger::before { background: var(--danger); }
 
+.score-left { text-align: center; flex-shrink: 0; }
+.score-right { flex: 1; }
+
 .score-label {
-  font-size: 11px;
+  font-size: 10px;
   font-family: var(--mono);
   color: var(--muted);
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .score-number {
-  font-size: 80px;
+  font-size: 64px;
   font-weight: 900;
   line-height: 1;
   font-family: var(--mono);
-  margin-bottom: 8px;
 }
 
 .score-card.safe .score-number { color: var(--safe); }
@@ -539,26 +529,26 @@ textarea:focus {
 .score-card.danger .score-number { color: var(--danger); }
 
 .score-verdict {
-  font-size: 16px;
-  font-weight: 700;
-  padding: 6px 16px;
-  border-radius: 20px;
+  font-size: 17px;
+  font-weight: 800;
+  padding: 7px 14px;
+  border-radius: 30px;
   display: inline-block;
-  margin-bottom: 4px;
+  margin-bottom: 10px;
 }
 
-.score-card.safe .score-verdict { background: rgba(34,197,94,0.15); color: var(--safe); }
-.score-card.warn .score-verdict { background: rgba(245,158,11,0.15); color: var(--warn); }
-.score-card.danger .score-verdict { background: rgba(239,68,68,0.15); color: var(--danger); }
+.score-card.safe .score-verdict { background: rgba(34,197,94,0.15); color: var(--safe); border: 1.5px solid rgba(34,197,94,0.3); }
+.score-card.warn .score-verdict { background: rgba(245,158,11,0.15); color: var(--warn); border: 1.5px solid rgba(245,158,11,0.3); }
+.score-card.danger .score-verdict { background: rgba(239,68,68,0.15); color: var(--danger); border: 1.5px solid rgba(239,68,68,0.3); }
 
 /* Risk bar */
-.risk-bar-wrap { margin-top: 18px; }
 .risk-bar-track {
   position: relative;
   height: 10px;
   border-radius: 99px;
   background: linear-gradient(to right, #22C55E 0%, #22C55E 30%, #F59E0B 30%, #F59E0B 70%, #EF4444 70%, #EF4444 100%);
   overflow: visible;
+  margin-bottom: 8px;
 }
 .risk-bar-needle {
   position: absolute;
@@ -567,24 +557,22 @@ textarea:focus {
   width: 18px; height: 18px;
   background: #fff;
   border-radius: 50%;
-  border: 3px solid #fff;
   box-shadow: 0 0 0 2px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.5);
   transition: left 0.9s cubic-bezier(0.34,1.56,0.64,1);
 }
 .risk-bar-segments {
   display: flex;
   gap: 4px;
-  margin-top: 8px;
 }
 .risk-seg {
   flex: 1;
   padding: 5px 0;
-  border-radius: 6px;
+  border-radius: 8px;
   text-align: center;
   font-size: 11px;
   font-family: var(--mono);
   font-weight: 700;
-  opacity: 0.3;
+  opacity: 0.35;
   transition: opacity 0.4s;
   line-height: 1.4;
 }
@@ -593,71 +581,96 @@ textarea:focus {
 .risk-seg.warn { background: rgba(245,158,11,0.15); color: var(--warn); border: 1px solid rgba(245,158,11,0.3); }
 .risk-seg.danger { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
 
-/* Detail cards */
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* 詐騙類型 */
+.type-row {
+  display: flex;
+  align-items: center;
   gap: 10px;
   margin-bottom: 12px;
 }
-
-.detail-card {
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-radius: 12px;
-  padding: 14px 16px;
-}
-
-.detail-card.full { grid-column: 1 / -1; }
-
-.detail-card-label {
-  font-size: 10px;
-  font-family: var(--mono);
-  color: var(--muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-.detail-card-value {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-}
-
+.type-label { font-size: 15px; color: var(--muted); }
 .type-badge {
   display: inline-block;
   background: rgba(255,140,66,0.15);
-  border: 1px solid rgba(255,140,66,0.3);
+  border: 1.5px solid rgba(255,140,66,0.35);
   color: var(--accent2);
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 6px;
+  padding: 5px 16px;
+  border-radius: 8px;
 }
 
+/* 建議行動（強調） */
+.advice-card {
+  background: rgba(239,68,68,0.07);
+  border: 2px solid rgba(239,68,68,0.35);
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 12px;
+}
+.advice-card-label {
+  font-size: 13px;
+  color: var(--danger);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 700;
+}
+.advice-text {
+  font-size: 21px;
+  line-height: 1.85;
+  color: #fff;
+  font-weight: 600;
+}
 
+/* 分析說明 */
+.analysis-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 12px;
+}
+.analysis-card-label {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.analysis-text {
+  font-size: 19px;
+  line-height: 1.9;
+  color: #ddd;
+}
+
+/* 可疑關鍵詞 */
+.keywords-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  border-radius: 18px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+}
+.keywords-label {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
 .keywords {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
+  gap: 8px;
 }
-
 .keyword-tag {
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.25);
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.3);
   color: #FCA5A5;
-  font-size: 12px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-family: var(--mono);
-}
-
-.suggestion-text {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text);
+  font-size: 17px;
+  padding: 7px 16px;
+  border-radius: 30px;
 }
 
 /* 165 Link */
