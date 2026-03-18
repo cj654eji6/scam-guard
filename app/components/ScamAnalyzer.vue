@@ -122,7 +122,7 @@ async function analyze() {
   }
 }
 
-function shareResult() {
+async function shareResult() {
   if (!result.value) return
   const r = result.value
   const sanitizedText = inputText.value.trim()
@@ -132,14 +132,41 @@ function shareResult() {
   const originalPart = sanitizedText ? `\n\n📋 原始訊息（連結已隱藏）：\n${sanitizedText}` : ''
   const text = `🛡️ 詐騙鑑定結果\n\n風險分數：${r.riskScore}/100\n類型：${r.scamType || '無明顯詐騙類型'}\n${r.summary}\n\n建議：${r.advice}${originalPart}\n\n🚨 詳情請見 165 反詐騙網站：https://165.npa.gov.tw\n\n👉 立即試試「防詐獵人」，一鍵識破詐騙無所遁形！→ https://line.me/R/ti/p/@793pgncd`
 
-  if (liff.isApiAvailable('shareTargetPicker')) {
-    liff.shareTargetPicker([{ type: 'text', text }])
-  } else if (navigator.share) {
-    navigator.share({ title: '詐騙鑑定結果', text })
-  } else {
-    navigator.clipboard.writeText(text).then(() => {
-      alert('鑑定結果已複製！請貼給親友查看。')
-    })
+  // 如果有上傳截圖，準備圖片檔案
+  const files: File[] = []
+  if (imageData.value) {
+    try {
+      const byteString = atob(imageData.value)
+      const ab = new ArrayBuffer(byteString.length)
+      const ia = new Uint8Array(ab)
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i)
+      const ext = imageType.value.split('/')[1] || 'png'
+      files.push(new File([ab], `scam-evidence.${ext}`, { type: imageType.value }))
+    } catch { /* 圖片轉換失敗，僅分享文字 */ }
+  }
+
+  // 優先使用 Web Share API
+  if (navigator.share) {
+    try {
+      const shareData: ShareData = { title: '詐騙鑑定結果', text }
+      if (files.length && navigator.canShare?.({ files })) {
+        shareData.files = files
+      }
+      await navigator.share(shareData)
+      return
+    } catch (e: unknown) {
+      // 使用者主動取消分享，不做任何事
+      if (e instanceof DOMException && e.name === 'AbortError') return
+      // 其他錯誤 → fallback 到剪貼簿
+    }
+  }
+
+  // Fallback：複製到剪貼簿
+  try {
+    await navigator.clipboard.writeText(text)
+    alert('鑑定結果已複製！請貼給親友查看。')
+  } catch {
+    alert('無法分享，請手動複製結果。')
   }
 }
 
@@ -273,7 +300,7 @@ function resetAll() {
       </div>
 
       <button class="share-btn" @click="shareResult">
-        <span>💬</span> 一鍵分享給 LINE 親友
+        <span>💬</span> 分享鑑定結果
       </button>
 
       <button class="reset-btn" @click="resetAll">重新鑑定</button>
