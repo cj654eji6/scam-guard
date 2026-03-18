@@ -14,7 +14,18 @@ const fraudSites: FraudSite[] = JSON.parse(
 )
 
 function extractUrls(text: string): string[] {
-  return text.match(/https?:\/\/[^\s,，。？！\)）"']+/gi) ?? []
+  // 有協議的網址：https://... 或 http://...
+  const withProtocol = text.match(/https?:\/\/[^\s,，。？！\)）"']+/gi) ?? []
+
+  // www. 開頭但無協議
+  const withWww = (text.match(/(?<![a-zA-Z0-9])www\.[a-zA-Z0-9][a-zA-Z0-9-]*\.[a-zA-Z]{2,}(?:\/[^\s,，。？！\)）"']*)?/gi) ?? [])
+    .map(u => `https://${u}`)
+
+  // 裸域名＋路徑，例如 tsbk.tw/8hyepw（必須有 / 後面的路徑才算，避免誤抓普通詞）
+  const bareWithPath = (text.match(/(?<![a-zA-Z0-9\/])([a-zA-Z0-9][a-zA-Z0-9-]*\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?)\/[^\s,，。？！\)）"']+/gi) ?? [])
+    .map(u => `https://${u}`)
+
+  return [...new Set([...withProtocol, ...withWww, ...bareWithPath])]
 }
 
 function getDomain(url: string): string {
@@ -57,6 +68,7 @@ const SYSTEM_PROMPT = `你是一位專業的詐騙訊息分析師，擅長辨識
 - 檢查是否包含常見詐騙特徵（緊急催促、高報酬承諾、要求個資/轉帳、偽冒身份等）
 - 識別詐騙類型（投資詐騙、網購詐騙、假冒客服、感情詐騙、釣魚連結等）
 - 分析可疑連結、電話號碼、帳號等資訊
+- 若分析的是圖片，請特別留意圖片中是否有 QR Code，若有請嘗試辨識其內容並回報於 detectedUrls
 
 ## 重要判斷原則：以「行為意圖」為主要風險信號
 
@@ -96,11 +108,11 @@ const SYSTEM_PROMPT = `你是一位專業的詐騙訊息分析師，擅長辨識
   "riskLevel": "high" | "medium" | "low" | "safe",
   "riskScore": 0-100,
   "summary": "一句話總結判斷結果",
-  "scamType": "詐騙類型（若有）",
+  "scamType": "詐騙類型字串，例如：釣魚詐騙、投資詐騙、假冒客服等。若無明顯詐騙類型，必須回傳 null，不可回傳空字串或任何文字",
   "indicators": ["詐騙特徵1", "詐騙特徵2"],
   "analysis": "詳細分析說明（100-200字）",
   "advice": "給用戶的建議行動",
-  "detectedUrls": ["圖片中辨識到的所有網址或域名，沒有則為空陣列"]
+  "detectedUrls": ["圖片中辨識到的所有網址或域名（含 QR Code 指向的網址，若可辨識）。沒有則回傳空陣列 []"]
 }`
 
 export default defineEventHandler(async (event) => {
@@ -120,6 +132,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: '文字過長，請縮短至 5000 字以內' })
   }
 
+  let urlExpansionNote = ''
+
   if (body.text) {
     const urls = extractUrls(body.text)
     const expandedUrls = await Promise.all(urls.map(expandUrl))
@@ -135,6 +149,17 @@ export default defineEventHandler(async (event) => {
         analysis: `此訊息包含的網址已收錄於 165 反詐騙專線的詐騙網站黑名單（${hit.site}），累計通報次數為 ${hit.count} 次。此類網站通常為詐騙博弈平台，請勿點擊或進行任何交易。`,
         advice: '請勿點擊該網址，立即封鎖傳送者，並可撥打 165 反詐騙專線回報。',
       }
+    }
+
+    // 將展開結果附加給 Claude，讓它知道短網址的真實目的地
+    const expansions = urls
+      .map((original, i) => {
+        const expanded = expandedUrls[i]
+        return original !== expanded ? `- ${original} → ${expanded}` : null
+      })
+      .filter(Boolean)
+    if (expansions.length) {
+      urlExpansionNote = `\n\n【網址展開結果（系統已自動追蹤重導向）】\n${expansions.join('\n')}`
     }
   }
 
@@ -160,13 +185,14 @@ export default defineEventHandler(async (event) => {
   if (body.text) {
     content.push({
       type: 'text',
-      text: `請分析以下訊息是否為詐騙：\n\n${body.text}`,
+      text: `請分析以下訊息是否為詐騙：\n\n${body.text}${urlExpansionNote}`,
     })
   }
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1000,
+    temperature: 0,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content }],
   })

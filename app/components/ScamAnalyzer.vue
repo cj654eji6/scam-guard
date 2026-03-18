@@ -47,18 +47,6 @@ const verdictText = computed(() => {
   return '⚠️ 高度疑似詐騙'
 })
 
-// 關鍵詞標記原文
-const highlightedText = computed(() => {
-  if (!result.value || !inputText.value) return ''
-  let text = inputText.value
-  for (const kw of result.value.indicators) {
-    text = text.replace(
-      new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-      `<span class="highlight-word">${kw}</span>`,
-    )
-  }
-  return text
-})
 
 function handleUpload(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
@@ -245,12 +233,7 @@ function resetAll() {
           <div class="detail-card-label">分析說明</div>
           <div class="suggestion-text">{{ result.analysis }}</div>
         </div>
-        <div v-if="highlightedText" class="detail-card full">
-          <div class="detail-card-label">原文標記（可疑話術）</div>
-          <!-- eslint-disable vue/no-v-html -->
-          <div class="highlighted-text" v-html="highlightedText" />
-        </div>
-        <div v-if="result.indicators.length" class="detail-card full">
+<div v-if="result.indicators.length" class="detail-card full">
           <div class="detail-card-label">可疑關鍵詞</div>
           <div class="keywords">
             <span v-for="kw in result.indicators" :key="kw" class="keyword-tag">{{ kw }}</span>
@@ -653,20 +636,6 @@ textarea:focus {
   border-radius: 6px;
 }
 
-.highlighted-text {
-  font-size: 14px;
-  line-height: 1.8;
-  color: var(--muted);
-}
-
-:deep(.highlight-word) {
-  background: rgba(239,68,68,0.2);
-  border: 1px solid rgba(239,68,68,0.4);
-  color: #FCA5A5;
-  border-radius: 4px;
-  padding: 0 4px;
-  font-weight: 700;
-}
 
 .keywords {
   display: flex;
