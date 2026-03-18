@@ -168,10 +168,13 @@ function resetAll() {
     <div v-if="!isLoading && !result">
       <div class="input-card">
         <div class="input-label">貼上可疑訊息</div>
-        <textarea
-          v-model="inputText"
-          placeholder="請貼上您收到的可疑訊息，例如：「恭喜您中獎了！點擊連結立即領取 NT$50,000 獎金…」"
-        />
+        <div class="textarea-wrap">
+          <textarea
+            v-model="inputText"
+            placeholder="請貼上您收到的可疑訊息，例如：「恭喜您中獎了！點擊連結立即領取 NT$50,000 獎金…」"
+          />
+          <button v-if="inputText" class="clear-btn" @click="inputText = ''">✕</button>
+        </div>
         <div class="divider">或</div>
         <button class="upload-btn" @click="fileInput?.click()">
           <span>📷</span> 上傳截圖
@@ -346,6 +349,10 @@ function resetAll() {
   box-shadow: 0 0 6px var(--accent);
 }
 
+.textarea-wrap {
+  position: relative;
+}
+
 textarea {
   width: 100%;
   background: var(--surface2);
@@ -356,10 +363,34 @@ textarea {
   font-size: 15px;
   line-height: 1.6;
   padding: 14px 16px;
+  padding-right: 40px;
   resize: none;
   min-height: 130px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.clear-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.clear-btn:hover {
+  background: rgba(255,75,75,0.3);
+  color: #fff;
 }
 
 textarea::placeholder { color: var(--muted); }
