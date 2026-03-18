@@ -19,6 +19,7 @@ const result = ref<AnalysisResult | null>(null)
 const loadingText = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploadError = ref('')
+const isOriginalExpanded = ref(false)
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic']
@@ -124,7 +125,8 @@ async function analyze() {
 function shareResult() {
   if (!result.value) return
   const r = result.value
-  const text = `🛡️ 詐騙鑑定結果\n\n風險分數：${r.riskScore}/100\n類型：${r.scamType}\n${r.summary}\n\n建議：${r.advice}\n\n🚨 詳情請見 165 反詐騙網站：https://165.npa.gov.tw`
+  const originalPart = inputText.value.trim() ? `\n\n📋 原始訊息：\n${inputText.value.trim()}` : ''
+  const text = `🛡️ 詐騙鑑定結果\n\n風險分數：${r.riskScore}/100\n類型：${r.scamType || '無明顯詐騙類型'}\n${r.summary}\n\n建議：${r.advice}${originalPart}\n\n🚨 詳情請見 165 反詐騙網站：https://165.npa.gov.tw`
 
   if (liff.isApiAvailable('shareTargetPicker')) {
     liff.shareTargetPicker([{ type: 'text', text }])
@@ -142,6 +144,7 @@ function resetAll() {
   imageData.value = null
   result.value = null
   uploadError.value = ''
+  isOriginalExpanded.value = false
   if (fileInput.value) fileInput.value.value = ''
 }
 </script>
@@ -239,6 +242,14 @@ function resetAll() {
         <div class="keywords">
           <span v-for="kw in result.indicators" :key="kw" class="keyword-tag">{{ kw }}</span>
         </div>
+      </div>
+
+      <div v-if="inputText.trim()" class="original-card">
+        <button class="original-toggle" @click="isOriginalExpanded = !isOriginalExpanded">
+          <span class="original-toggle-label">📋 原始訊息</span>
+          <span class="original-toggle-arrow" :class="{ expanded: isOriginalExpanded }">▼</span>
+        </button>
+        <div v-if="isOriginalExpanded" class="original-text">{{ inputText.trim() }}</div>
       </div>
 
       <div class="link-165" @click="navigateTo('https://165.npa.gov.tw', { external: true, open: { target: '_blank' } })">
@@ -675,6 +686,48 @@ textarea:focus {
   border-radius: 30px;
 }
 
+/* 原始訊息折疊卡 */
+.original-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  border-radius: 18px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.original-toggle {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  color: var(--text);
+}
+.original-toggle-label {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+.original-toggle-arrow {
+  font-size: 14px;
+  color: var(--muted);
+  transition: transform 0.25s;
+}
+.original-toggle-arrow.expanded {
+  transform: rotate(180deg);
+}
+.original-text {
+  font-size: 17px;
+  line-height: 1.8;
+  color: #bbb;
+  padding: 0 20px 18px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
 /* 165 Link */
 .link-165 {
   background: rgba(59,130,246,0.08);
@@ -721,8 +774,8 @@ textarea:focus {
   color: #fff;
   font-family: var(--sans);
   font-weight: 700;
-  font-size: 15px;
-  padding: 15px;
+  font-size: 20px;
+  padding: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -737,18 +790,20 @@ textarea:focus {
 /* Reset */
 .reset-btn {
   width: 100%;
-  background: transparent;
-  border: 1px solid var(--border2);
-  border-radius: 12px;
-  color: var(--muted);
+  background: rgba(255,255,255,0.12);
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 16px;
+  color: #fff;
   font-family: var(--sans);
-  font-size: 14px;
-  padding: 13px;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 18px;
   cursor: pointer;
   transition: all 0.2s;
+  letter-spacing: 0.5px;
 }
 
-.reset-btn:hover { border-color: var(--border2); color: var(--text); background: var(--surface); }
+.reset-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.55); }
 
 /* Animation */
 .fade-in {
