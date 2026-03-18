@@ -13,6 +13,14 @@ const fraudSites: FraudSite[] = JSON.parse(
   readFileSync(resolve('./server/api/data/fraud_sites.json'), 'utf-8')
 )
 
+// 相同輸入快取，避免重複分析結果不一致（TTL 10 分鐘）
+const analysisCache = new Map<string, { result: unknown; expiresAt: number }>()
+const CACHE_TTL = 5 * 60 * 1000
+
+function getCacheKey(text?: string, image?: string): string {
+  return `${text ?? ''}::${image ? image.slice(0, 64) : ''}`
+}
+
 function extractUrls(text: string): string[] {
   // 有協議的網址：https://... 或 http://...
   const withProtocol = text.match(/https?:\/\/[^\s,，。？！\)）"']+/gi) ?? []
@@ -124,6 +132,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: '請提供文字或圖片' })
   }
 
+  // 快取命中直接回傳
+  const cacheKey = getCacheKey(body.text, body.image)
+  const cached = analysisCache.get(cacheKey)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.result
+  }
+
   if (body.image && body.image.length * 0.75 > 5 * 1024 * 1024) {
     throw createError({ statusCode: 413, message: '圖片超過 5 MB 限制，請壓縮後再上傳' })
   }
@@ -224,13 +239,14 @@ export default defineEventHandler(async (event) => {
       }
 
       const { detectedUrls: _, ...finalResult } = result
+      analysisCache.set(cacheKey, { result: finalResult, expiresAt: Date.now() + CACHE_TTL })
       return finalResult
     }
   } catch {
     // fallback
   }
 
-  return {
+  const fallbackResult = {
     riskLevel: 'medium',
     riskScore: 50,
     summary: '無法完成分析',
@@ -239,4 +255,6 @@ export default defineEventHandler(async (event) => {
     analysis: text,
     advice: '請提高警覺，如有疑慮請撥打 165 反詐騙專線。',
   }
+  analysisCache.set(cacheKey, { result: fallbackResult, expiresAt: Date.now() + CACHE_TTL })
+  return fallbackResult
 })
