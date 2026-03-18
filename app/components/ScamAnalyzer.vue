@@ -737,18 +737,20 @@ textarea:focus {
 /* Reset */
 .reset-btn {
   width: 100%;
-  background: transparent;
-  border: 1px solid var(--border2);
-  border-radius: 12px;
-  color: var(--muted);
+  background: rgba(255,255,255,0.12);
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 16px;
+  color: #fff;
   font-family: var(--sans);
-  font-size: 14px;
-  padding: 13px;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 18px;
   cursor: pointer;
   transition: all 0.2s;
+  letter-spacing: 0.5px;
 }
 
-.reset-btn:hover { border-color: var(--border2); color: var(--text); background: var(--surface); }
+.reset-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.55); }
 
 /* Animation */
 .fade-in {
