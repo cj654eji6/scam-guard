@@ -234,7 +234,7 @@ function resetAll() {
         <div class="detail-card">
           <div class="detail-card-label">詐騙類型</div>
           <div class="detail-card-value">
-            <span class="type-badge">{{ result.scamType }}</span>
+            <span class="type-badge">{{ result.scamType || '無明顯詐騙類型' }}</span>
           </div>
         </div>
         <div class="detail-card">
