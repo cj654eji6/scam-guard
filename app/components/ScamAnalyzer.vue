@@ -14,6 +14,7 @@ interface AnalysisResult {
 const inputText = ref('')
 const imageData = ref<string | null>(null)
 const imageType = ref('image/png')
+const imageFileName = ref('')
 const isLoading = ref(false)
 const result = ref<AnalysisResult | null>(null)
 const loadingText = ref('')
@@ -67,13 +68,11 @@ function handleUpload(event: Event) {
 
   uploadError.value = ''
   imageType.value = file.type || 'image/png'
+  imageFileName.value = file.name
   const reader = new FileReader()
   reader.onload = (e) => {
     const dataUrl = e.target?.result as string
     imageData.value = dataUrl.split(',')[1] ?? null
-    if (!inputText.value) {
-      inputText.value = `[截圖已上傳] ${file.name}`
-    }
   }
   reader.readAsDataURL(file)
 }
@@ -94,7 +93,7 @@ async function analyze() {
 
   try {
     const body: Record<string, string> = {}
-    const cleanText = inputText.value.replace(/^\[截圖已上傳\].*\n?/, '').trim()
+    const cleanText = inputText.value.trim()
     if (cleanText) body.text = cleanText
     if (imageData.value) {
       body.image = imageData.value
@@ -130,7 +129,14 @@ async function shareResult() {
   if (!result.value) return
   const r = result.value
   const strippedText = stripProtocol(inputText.value.trim())
-  const originalPart = strippedText ? `\n\n📋 被鑑定的可疑訊息：\n${strippedText}` : ''
+  let originalPart = ''
+  if (imageData.value && strippedText) {
+    originalPart = `\n\n📋 被鑑定的可疑訊息：\n${strippedText}\n請參考以下分享圖`
+  } else if (imageData.value) {
+    originalPart = `\n\n📋 被鑑定的可疑訊息：\n請參考以下分享圖`
+  } else if (strippedText) {
+    originalPart = `\n\n📋 被鑑定的可疑訊息：\n${strippedText}`
+  }
   const text = `🛡️ 詐騙鑑定結果\n\n風險分數：${r.riskScore}/100\n類型：${r.scamType || '無明顯詐騙類型'}\n${r.summary}\n\n建議：${r.advice}${originalPart}\n\n🚨 詳情請見 165 反詐騙網站：https://165.npa.gov.tw\n\n👉 立即試試「防詐獵人」，一鍵識破詐騙無所遁形！\nhttps://line.me/R/ti/p/@793pgncd`
 
   // 如果有上傳截圖，準備圖片檔案
@@ -174,6 +180,7 @@ async function shareResult() {
 function resetAll() {
   inputText.value = ''
   imageData.value = null
+  imageFileName.value = ''
   result.value = null
   uploadError.value = ''
   isOriginalExpanded.value = false
@@ -204,8 +211,8 @@ function resetAll() {
           <button v-if="inputText" class="clear-btn" @click="inputText = ''">✕</button>
         </div>
         <div class="divider">或</div>
-        <button class="upload-btn" @click="fileInput?.click()">
-          <span>📷</span> 上傳截圖
+        <button class="upload-btn" :class="{ 'upload-btn--done': imageData }" @click="fileInput?.click()">
+          <span>📷</span> {{ imageData ? '圖片已選取，點擊重新上傳' : '上傳截圖' }}
         </button>
         <input
           ref="fileInput"
@@ -283,12 +290,17 @@ function resetAll() {
         </div>
       </div>
 
-      <div v-if="inputText.trim()" class="original-card">
+      <div v-if="inputText.trim() || imageData" class="original-card">
         <button class="original-toggle" @click="isOriginalExpanded = !isOriginalExpanded">
-          <span class="original-toggle-label">📋 原始訊息</span>
+          <span class="original-toggle-label">📋 被鑑定的可疑訊息</span>
           <span class="original-toggle-arrow" :class="{ expanded: isOriginalExpanded }">▼</span>
         </button>
-        <div v-if="isOriginalExpanded" class="original-text">{{ inputText.trim() }}</div>
+        <div v-if="isOriginalExpanded">
+          <div v-if="inputText.trim()" class="original-text">{{ inputText.trim() }}</div>
+          <div v-if="imageData" class="original-image-wrap">
+            <img :src="`data:${imageType};base64,${imageData}`" class="original-image" alt="被鑑定圖片" />
+          </div>
+        </div>
       </div>
 
       <div class="link-165" @click="navigateTo('https://165.npa.gov.tw', { external: true, open: { target: '_blank' } })">
@@ -465,6 +477,23 @@ textarea:focus {
   border-color: rgba(255,75,75,0.4);
   color: var(--text);
   background: rgba(255,75,75,0.05);
+}
+
+.upload-btn--done {
+  border-color: rgba(34,197,94,0.4);
+  color: var(--safe);
+  background: rgba(34,197,94,0.05);
+}
+
+.original-image-wrap {
+  padding: 0 20px 18px;
+}
+
+.original-image {
+  width: 100%;
+  border-radius: 10px;
+  display: block;
+  object-fit: contain;
 }
 
 .error-banner {
