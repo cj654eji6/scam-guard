@@ -219,9 +219,9 @@ function resetAll() {
         </div>
       </div>
 
-      <div v-if="result.scamType" class="type-row">
+      <div class="type-row">
         <span class="type-label">詐騙類型</span>
-        <span class="type-badge">{{ result.scamType }}</span>
+        <span class="type-badge">{{ result.scamType || '無明顯詐騙類型' }}</span>
       </div>
 
       <div class="advice-card">
@@ -529,7 +529,7 @@ textarea:focus {
 .score-card.danger .score-number { color: var(--danger); }
 
 .score-verdict {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 800;
   padding: 7px 14px;
   border-radius: 30px;
@@ -588,13 +588,13 @@ textarea:focus {
   gap: 10px;
   margin-bottom: 12px;
 }
-.type-label { font-size: 15px; color: var(--muted); }
+.type-label { font-size: 20px; color: var(--muted); font-weight: 700; }
 .type-badge {
   display: inline-block;
   background: rgba(255,140,66,0.15);
   border: 1.5px solid rgba(255,140,66,0.35);
   color: var(--accent2);
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   padding: 5px 16px;
   border-radius: 8px;
@@ -609,9 +609,9 @@ textarea:focus {
   margin-bottom: 12px;
 }
 .advice-card-label {
-  font-size: 13px;
+  font-size: 20px;
   color: var(--danger);
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   margin-bottom: 14px;
   font-weight: 700;
@@ -620,7 +620,7 @@ textarea:focus {
   font-size: 21px;
   line-height: 1.85;
   color: #fff;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 /* 分析說明 */
@@ -632,11 +632,12 @@ textarea:focus {
   margin-bottom: 12px;
 }
 .analysis-card-label {
-  font-size: 13px;
+  font-size: 20px;
   color: var(--muted);
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   margin-bottom: 14px;
+  font-weight: 700;
 }
 .analysis-text {
   font-size: 19px;
@@ -653,10 +654,11 @@ textarea:focus {
   margin-bottom: 12px;
 }
 .keywords-label {
-  font-size: 13px;
+  font-size: 20px;
   color: var(--muted);
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
+  font-weight: 700;
   margin-bottom: 12px;
 }
 .keywords {
@@ -668,7 +670,7 @@ textarea:focus {
   background: rgba(239,68,68,0.12);
   border: 1px solid rgba(239,68,68,0.3);
   color: #FCA5A5;
-  font-size: 17px;
+  font-size: 20px;
   padding: 7px 16px;
   border-radius: 30px;
 }
